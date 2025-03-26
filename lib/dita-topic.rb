@@ -73,6 +73,10 @@ class DitaTopic < Asciidoctor::Converter::Base
     result << %(<topic#{compose_id (node.id or node.attributes['docname'])}#{outputclass}>)
     result << %(<title>#{node.doctitle}</title>)
 
+    # Create the toc, if necessary
+    # A new .ditamap file should be created, but currently I'm not doing this for testing
+    result << (node.converter.convert node, 'outline') if node.attr? 'toc'
+
     # Check if the author line is enabled and defined:
     if @authors_allowed && !node.authors.empty?
       # Open the prolog:
@@ -820,13 +824,49 @@ class DitaTopic < Asciidoctor::Converter::Base
     result.join LF
   end
 
-  # Method aliases
+  ##
+  # Create a ditamap from a document outline
+  # @param node Document instance
+  # @param opts Options needed for the converstion
+  # @return xml for the created ditamap
+  def convert_outline node, opts = {}
+    return unless node.sections?
 
+    result = [%(<map id="#{node.id}_ditamap">)]
+
+    result << %(<title>#{node.title}</title>)
+
+    node.sections.each do |section|
+      result << %(#{add_topicref section, opts}).chomp
+    end
+    result << '</map>'
+
+    result.join LF
+  end
+
+  # Method aliases
   alias convert_embedded content_only
   alias convert_pass content_only
   alias convert_toc skip
 
   # Helper methods
+
+  ##
+  # Create a topicref entry for the given section
+  # @param node Section instance
+  # @param opts Options to use during generation
+  # @return XML string containing the topicref entry
+  def add_topicref node, opts = {}
+    result = [%(<topicref href="#{node.document.id}-#{node.id}.dita">)]
+
+    node.sections.each do |section|
+      result << %(#{add_topicref(section, opts)})
+    end
+
+    result << '</topicref>'
+
+    result.join LF
+  end
 
   def add_block_title content, title
     # NOTE: Unlike AsciiDoc, DITA does not support titles assigned to
