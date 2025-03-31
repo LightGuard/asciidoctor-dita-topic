@@ -841,7 +841,17 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
     result << '</map>'
 
-    result.join LF
+    if (node.attr 'toc-placement') == 'macro'
+      ditamap_filename = (node.attr? 'docname') ? (node.attr 'docname') : 'ditamap'
+      ditamap_path = "#{node.base_dir}/#{ditamap_filename}.ditamap"
+
+      result.prepend '<!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">'
+      result.prepend '<?xml version="1.0" encoding="UTF-8"?>'
+
+      File.open(ditamap_path, 'w') { |f| f.write(result.join LF) }
+    else
+      result.join LF
+    end
   end
 
   # Method aliases
