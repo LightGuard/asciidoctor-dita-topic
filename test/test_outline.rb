@@ -56,7 +56,6 @@ class TestOutline < Minitest::Test
       File.write(tmp_adoc_path, adoc)
       Asciidoctor.convert_file tmp_adoc_path, backend: 'dita-topic', standalone: true, logger: false, doctype: 'article', to_file: "#{dir}/ditamap-test.dita", base_dir: dir
       assert_path_exists "#{dir}/ditamap-test.ditamap"
-      # TODO read ditamap and test to make sure it is all there
     end
   end
 
