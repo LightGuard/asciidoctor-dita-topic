@@ -31,8 +31,8 @@ class TestOutline < Minitest::Test
     assert_xpath_count xml, 1, '//map'
     assert_xpath_equal xml, 'Document Title', '//map/title/text()'
 
-    assert_xpath_count xml, 2, '//map/topicref'
-    assert_xpath_equal xml, '-_section_three.dita', '//map/topicref[2]/topicref/@href'
+    assert_xpath_count xml, 1, '//map/topicref'
+    assert_xpath_equal xml, '_section_three.dita', '//map/topicref[1]/topicref/@href'
 
     # We should not have created a separate ditamap
     refute_path_exists 'ditamap.ditamap'
@@ -77,7 +77,29 @@ class TestOutline < Minitest::Test
     assert_xpath_count dita_xml, 1, '/map'
     assert_xpath_equal dita_xml, 'Document Title', '/map/title/text()'
 
-    assert_xpath_count dita_xml, 2, '/map/topicref'
-    assert_xpath_equal dita_xml, '-_section_three.dita', '/map/topicref[2]/topicref/@href'
+    assert_xpath_count dita_xml, 1, '/map/topicref'
+    assert_xpath_equal dita_xml, '_section_three.dita', '/map/topicref[1]/topicref/@href'
+  end
+
+  def test_ditamap_destination_option
+    adoc = <<~EOS.chomp
+      :toc: macro
+      = Document Title
+
+      == Section One
+
+      == Section Two
+
+      === Section Three
+    EOS
+
+    # Save the adoc file, convert it, check for ditamap with the proper name, cleanup
+    Dir.mktmpdir do |dir|
+      tmp_adoc_path = "#{dir}/ditamap-test.adoc"
+      File.write(tmp_adoc_path, adoc)
+      Asciidoctor.convert_file tmp_adoc_path, backend: 'dita-topic', standalone: true, logger: false, doctype: 'article',
+                               to_dir: "#{dir}/dita-map-output/", base_dir: dir, mkdirs: true, safe: 'unsafe'
+      assert_path_exists "#{dir}/dita-map-output/ditamap-test.ditamap"
+    end
   end
 end

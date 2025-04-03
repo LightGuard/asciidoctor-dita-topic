@@ -29,7 +29,7 @@ class DitaTopic < Asciidoctor::Converter::Base
   NAME = 'dita-topic'
   register_for NAME
 
-  def initialize *args
+  def initialize(* args)
     super
     outfilesuffix '.dita'
 
@@ -46,7 +46,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     @titles_allowed = true
   end
 
-  def convert_document node
+  def convert_document(node, opts = {})
     # Check if the author line is enabled:
     @authors_allowed = true if (node.attr 'dita-topic-authors') == 'on'
 
@@ -75,7 +75,7 @@ class DitaTopic < Asciidoctor::Converter::Base
 
     # Create the toc, if necessary
     # A new .ditamap file should be created, but currently I'm not doing this for testing
-    result << (node.converter.convert node, 'outline') if node.attr? 'toc'
+    result << (node.converter.convert node, 'outline', opts) if node.attr? 'toc'
 
     # Check if the author line is enabled and defined:
     if @authors_allowed && !node.authors.empty?
@@ -100,7 +100,7 @@ class DitaTopic < Asciidoctor::Converter::Base
       logger.warn "#{NAME}: Author lines not enabled for topics"
 
       # Process the author line as a plain paragraph:
-      result << %(<p>#{node.authors.map {|author| compose_author author, node}.join('; ')}</p>)
+      result << %(<p>#{node.authors.map { |author| compose_author author, node }.join('; ')}</p>)
     end
 
     # Close the document body:
@@ -112,7 +112,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     result.join LF
   end
 
-  def convert_admonition node
+  def convert_admonition(node, opts = {})
     # NOTE: Unlike admonitions in AsciiDoc, the <note> element in DITA
     # cannot have its own <title>. Admonition titles are therefore not
     # preserved.
@@ -130,13 +130,13 @@ class DitaTopic < Asciidoctor::Converter::Base
     EOF
   end
 
-  def convert_audio node
+  def convert_audio(node, opts = {})
     # Issue a warning if audio content is present:
     logger.warn "#{NAME}: Audio macro not supported"
     return ''
   end
 
-  def convert_colist node
+  def convert_colist(node, opts = {})
     # Issue a warning if callouts are disabled:
     unless @callouts_allowed
       logger.warn "#{NAME}: Callouts not supported in DITA"
@@ -181,7 +181,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     result.join LF
   end
 
-  def convert_dlist node
+  def convert_dlist(node, opts = {})
     # Check if a different list style is set:
     return compose_horizontal_dlist node if node.style == 'horizontal'
     return compose_qanda_dlist node if node.style == 'qanda'
@@ -223,7 +223,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     add_block_title (result.join LF), node.title
   end
 
-  def convert_example node
+  def convert_example(node, opts = {})
     <<~EOF.chomp
     <example#{compose_id node.id}>
     #{node.title ? %(<title>#{node.title}</title>\n) : ''}#{node.content}
@@ -231,7 +231,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     EOF
   end
 
-  def convert_floating_title node
+  def convert_floating_title(node, opts = {})
     # NOTE: Unlike AsciiDoc, DITA does not have a dedicated element for
     # floating titles. As a workaround, I decided to use a paragraph with
     # the outputclass attribute.
@@ -246,7 +246,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     %(<p outputclass="title sect#{node.level}"><b>#{node.title}</b></p>)
   end
 
-  def convert_image(node)
+  def convert_image(node, opts = {})
     # Check if additional attributes are specified:
     width  = (node.attr? 'width') ? %( width="#{node.attr 'width'}") : ''
     height = (node.attr? 'height') ? %( height="#{node.attr 'height'}") : ''
@@ -271,7 +271,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_inline_anchor node
+  def convert_inline_anchor(node, opts = {})
     # Determine the type of the anchor:
     case node.type
     when :link
@@ -328,7 +328,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_inline_break node
+  def convert_inline_break(node, opts = {})
     # NOTE: Unlike AsciiDoc, DITA does not support inline line breaks.
 
     # Issue a warning if an inline line break is present:
@@ -338,11 +338,11 @@ class DitaTopic < Asciidoctor::Converter::Base
     %(#{node.text}<!-- break -->)
   end
 
-  def convert_inline_button node
+  def convert_inline_button(node, opts = {})
     %(<uicontrol outputclass="button">#{node.text}</uicontrol>)
   end
 
-  def convert_inline_callout node
+  def convert_inline_callout(node, opts = {})
     # Issue a warning if callouts are disabled:
     unless @callouts_allowed
       logger.warn "#{NAME}: Callouts not supported in DITA"
@@ -354,20 +354,20 @@ class DitaTopic < Asciidoctor::Converter::Base
   end
 
   # FIXME: Add support for footnoteref equivalent.
-  def convert_inline_footnote node
+  def convert_inline_footnote(node, opts = {})
     %(<fn>#{node.text}</fn>)
   end
 
-  def convert_inline_image node
+  def convert_inline_image(node, opts = {})
     # Check if additional attributes are specified:
-    width  = (node.attr? 'width') ? %( width="#{node.attr 'width'}") : ''
+    width = (node.attr? 'width') ? %( width="#{node.attr 'width'}") : ''
     height = (node.attr? 'height') ? %( height="#{node.attr 'height'}") : ''
 
     # Return the XML output:
     %(<image href="#{node.image_uri node.target}"#{width}#{height} placement="inline"><alt>#{node.alt}</alt></image>)
   end
 
-  def convert_inline_indexterm node
+  def convert_inline_indexterm(node, opts = {})
     # Check if the index term appears in the flow of the text:
     if node.type == :visible
       return %(<indexterm>#{node.text}</indexterm>#{node.text})
@@ -387,7 +387,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_inline_kbd node
+  def convert_inline_kbd(node, opts = {})
     # Check if there is more than one key:
     if (keys = node.attr 'keys').size == 1
       %(<uicontrol outputclass="key">#{keys[0]}</uicontrol>)
@@ -396,7 +396,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_inline_menu node
+  def convert_inline_menu(node, opts = {})
     # Compose the markup for the menu:
     menu = %(<uicontrol>#{node.attr 'menu'}</uicontrol>)
 
@@ -410,7 +410,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     %(<menucascade>#{menu}#{submenus}#{menuitem}</menucascade>)
   end
 
-  def convert_inline_quoted node
+  def convert_inline_quoted(node, opts = {})
     # Determine the inline markup type:
     case node.type
     when :emphasis
@@ -432,7 +432,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_listing node
+  def convert_listing(node, opts = {})
     # Check whether the source language is defined:
     language = (node.attributes.key? 'language') ? %( outputclass="language-#{node.attributes['language']}") : ''
 
@@ -447,7 +447,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     add_block_title result, node.title
   end
 
-  def convert_literal node
+  def convert_literal(node, opts = {})
     # Compose the XML output:
     result = <<~EOF.chomp
     <pre>
@@ -459,7 +459,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     add_block_title result, node.title
   end
 
-  def convert_olist node
+  def convert_olist(node, opts = {})
     # Open the ordered list:
     result = ['<ol>']
 
@@ -482,7 +482,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     add_block_title (result.join LF), node.title
   end
 
-  def convert_open node
+  def convert_open(node, opts = {})
     # NOTE: Although DITA provides an <abstract> element that is intended
     # for this purpose, it is placed alongside the <body> element and not
     # inside of ot. As there is no clean way to place it there, I use
@@ -502,7 +502,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_page_break node
+  def convert_page_break(node, opts = {})
     # NOTE: Unlike AsciiDoc, DITA does not support page breaks.
 
     # Issue a warning if a page break is present:
@@ -512,7 +512,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     %(<p outputclass="page-break"></p>)
   end
 
-  def convert_paragraph node
+  def convert_paragraph(node, opts = {})
     if @abstracts_allowed and (node.attr 'role') == '_abstract'
       add_block_title %(<p outputclass="abstract">#{node.content}</p>), node.title
     else
@@ -520,11 +520,11 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_preamble node
+  def convert_preamble(node, opts = {})
     node.content
   end
 
-  def convert_quote node
+  def convert_quote(node, opts = {})
     # Check if the author is defined:
     author = (node.attr? 'attribution') ? %(\n<p>&#8212; #{node.attr 'attribution'}</p>) : ''
 
@@ -547,7 +547,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_section node
+  def convert_section(node, opts = {})
     # NOTE: Unlike sections in AsciiDoc, the <section> element in DITA
     # cannot be nested. Consequently, converting AsciiDoc files that do
     # contain nested subsections will result in invalid markup.
@@ -570,7 +570,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     EOF
   end
 
-  def convert_sidebar node
+  def convert_sidebar(node, opts = {})
     # NOTE: Unlike AsciiDoc, DITA does not provide markup for a sidebar. As
     # a workaround, I decided to use a div with the outputclass attribute.
 
@@ -590,13 +590,13 @@ class DitaTopic < Asciidoctor::Converter::Base
     end
   end
 
-  def convert_stem node
+  def convert_stem(node, opts = {})
     # Issue a warning if a STEM content is present:
     logger.warn "#{NAME}: STEM support not implemented"
     return ''
   end
 
-  def convert_table node
+  def convert_table(node, opts = {})
     # Open the table:
     result = ['<table>']
 
@@ -676,7 +676,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     result.join LF
   end
 
-  def convert_thematic_break node
+  def convert_thematic_break(node, opts = {})
     # NOTE: Unlike AsciiDoc, DITA does not support thematic breaks.
 
     # Issue a warning if a thematic break is present:
@@ -686,7 +686,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     %(<p outputclass="thematic-break"></p>)
   end
 
-  def convert_ulist node
+  def convert_ulist(node, opts = {})
     # Open the unordered list:
     result = ['<ul>']
 
@@ -716,7 +716,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     add_block_title (result.join LF), node.title
   end
 
-  def convert_verse node
+  def convert_verse(node, opts = {})
     # Check if the author is defined:
     author = (node.attr? 'attribution') ? %(\n&#8212; #{node.attr 'attribution'}) : ''
 
@@ -731,13 +731,13 @@ class DitaTopic < Asciidoctor::Converter::Base
     EOF
   end
 
-  def convert_video node
+  def convert_video(node, opts = {})
     # Issue a warning if video content is present:
     logger.warn "#{NAME}: Video macro not supported"
     return ''
   end
 
-  def compose_qanda_dlist node
+  def compose_qanda_dlist(node, opts = {})
     # Open the ordered list:
     result = ['<ol>']
 
@@ -768,7 +768,7 @@ class DitaTopic < Asciidoctor::Converter::Base
     add_block_title (result.join LF), node.title
   end
 
-  def compose_horizontal_dlist node
+  def compose_horizontal_dlist(node, opts = {})
     # Open the table:
     result = ['<table outputclass="horizontal-dlist">']
 
@@ -829,28 +829,40 @@ class DitaTopic < Asciidoctor::Converter::Base
   # @param node Document instance
   # @param opts Options needed for the converstion
   # @return xml for the created ditamap
-  def convert_outline node, opts = {}
+  def convert_outline(node, opts = {})
     return unless node.sections?
 
-    result = [%(<map id="#{node.id}_ditamap">)]
+    # There's no reason to create a ditamap if everything are no nested sections
+    #return unless node.sections.any? { |section| section.sections? }
 
+    ditamap_filename = (node.attr? 'docname') ? (node.attr 'docname') : 'ditamap'
+
+    result = [%(<map id="#{ditamap_filename}_ditamap">)]
     result << %(<title>#{node.title}</title>)
+    result << %(<topicref href="#{ditamap_filename}.dita">)
 
+    # Add refs to all the other subsections
     node.sections.each do |section|
-      result << %(#{add_topicref section, opts}).chomp
+      result << (add_topicref section, opts)
     end
+
+    result << '</topicref>'
     result << '</map>'
 
     if (node.attr 'toc-placement') == 'macro'
-      ditamap_filename = (node.attr? 'docname') ? (node.attr 'docname') : 'ditamap'
-      ditamap_path = "#{node.base_dir}/#{ditamap_filename}.ditamap"
+      # Checking unsafe, but not sure if that is correct
+      if (node.options.key? :to_dir) && (node.document.safe == Asciidoctor::SafeMode::UNSAFE)
+        ditamap_path = "#{node.options[:to_dir]}/#{ditamap_filename}.ditamap"
+      else
+        ditamap_path = "#{node.base_dir}/#{ditamap_filename}.ditamap"
+      end
 
       result.prepend '<!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">'
       result.prepend '<?xml version="1.0" encoding="UTF-8"?>'
 
-      File.open(ditamap_path, 'w') { |f| f.write(result.join LF) }
+      File.open(ditamap_path, 'w') {|f| f.write(result.reject{ |r| r.nil? || r.empty?}.join LF) }
     else
-      result.join LF
+      result.reject{|r| r.nil? || r.empty?}.join LF
     end
   end
 
@@ -866,19 +878,20 @@ class DitaTopic < Asciidoctor::Converter::Base
   # @param node Section instance
   # @param opts Options to use during generation
   # @return XML string containing the topicref entry
-  def add_topicref node, opts = {}
-    result = [%(<topicref href="#{node.document.id}-#{node.id}.dita">)]
+  def add_topicref(node, opts = {})
+    if node.level >= 2 || node.sections?
+      result = []
+      result << [%(<topicref href="#{node.document.attr 'docname'}#{node.id}.dita">)] if node.level >= 2
+      node.sections.each do |section|
+        result << add_topicref(section, opts).chomp
+      end
+      result << '</topicref>' if node.level >= 2
 
-    node.sections.each do |section|
-      result << %(#{add_topicref(section, opts)})
+      result.join LF
     end
-
-    result << '</topicref>'
-
-    result.join LF
   end
 
-  def add_block_title content, title
+  def add_block_title(content, title)
     # NOTE: Unlike AsciiDoc, DITA does not support titles assigned to
     # certain block elements. As a workaround, I decided to use a paragraph
     # with the outputclass attribute.
@@ -899,13 +912,13 @@ class DitaTopic < Asciidoctor::Converter::Base
     EOF
   end
 
-  def compose_author author, node
+  def compose_author(author, node)
     name = node.sub_replacements author.name
     mail = %( &lt;#{node.sub_replacements author.email}&gt;) if author.email
     return %(#{name}#{mail})
   end
 
-  def compose_floating_title title
+  def compose_floating_title(title)
     # NOTE: Unlike AsciiDoc, DITA does not support floating titles or
     # titles assigned to certain block elements. As a workaround, I decided
     # to use a paragraph with the outputclass attribute.
@@ -923,11 +936,11 @@ class DitaTopic < Asciidoctor::Converter::Base
     %(<p outputclass="title"><b>#{title}</b></p>\n)
   end
 
-  def compose_id id
+  def compose_id(id)
     id ? %( id="#{id}") : ''
   end
 
-  def compose_circled_number number
+  def compose_circled_number(number)
     # Verify the number is in a supported range:
     if number < 1 || number > 50
       logger.warn "#{NAME}: Callout number not in range between 1 and 50"
