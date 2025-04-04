@@ -861,6 +861,7 @@ class DitaTopic < Asciidoctor::Converter::Base
       result.prepend '<?xml version="1.0" encoding="UTF-8"?>'
 
       File.open(ditamap_path, 'w') {|f| f.write(result.reject{ |r| r.nil? || r.empty?}.join LF) }
+      nil
     else
       result.reject{|r| r.nil? || r.empty?}.join LF
     end
